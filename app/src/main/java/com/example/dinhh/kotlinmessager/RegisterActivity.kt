@@ -2,7 +2,6 @@ package com.example.dinhh.kotlinmessager
 
 import android.app.Activity
 import android.content.Intent
-import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
@@ -12,21 +11,21 @@ import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.storage.FirebaseStorage
-import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.activity_register.*
 import java.util.*
 
-class MainActivity : AppCompatActivity() {
+class RegisterActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(R.layout.activity_register)
 
         register_button_register.setOnClickListener {
             performRegister()
         }
 
         already_have_account_text_view.setOnClickListener {
-            Log.d("MainActivity", "Show login activity")
+            Log.d("RegisterActivity", "Show login activity")
 
             //Lauch the login activity
             val intent = Intent(this, LoginActivity::class.java)
@@ -34,7 +33,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         selectphoto_button_register.setOnClickListener {
-            Log.d("MainActivity", "Select photo")
+            Log.d("RegisterActivity", "Select photo")
             val intent = Intent(Intent.ACTION_PICK)
             intent.type = "image/*"
             startActivityForResult(intent, 0)
@@ -56,13 +55,13 @@ class MainActivity : AppCompatActivity() {
                     if (!it.isSuccessful) {
                         return@addOnCompleteListener
                     } else {
-                        Log.d("MainActivity", "Successfully created useer with uid: ${it.result.user.uid}")
+                        Log.d("RegisterActivity", "Successfully created useer with uid: ${it.result.user.uid}")
 
                         uploadImageToFirebaseStorage()
                     }
                 }
                 .addOnFailureListener {
-                    Log.d("MainActivity", "Failed to create user: ${it.message}")
+                    Log.d("RegisterActivity", "Failed to create user: ${it.message}")
                     Toast.makeText(this, "Failed to create user: ${it.message}", Toast.LENGTH_SHORT).show()
                 }
     }
@@ -73,9 +72,9 @@ class MainActivity : AppCompatActivity() {
         val ref = FirebaseStorage.getInstance().getReference("/images/$filename")
         ref.putFile(selectedPhotoUri!!)
                 .addOnSuccessListener {
-                    Log.d("MainActivity", "Successfully uploaded image: ${it.metadata?.path}")
+                    Log.d("RegisterActivity", "Successfully uploaded image: ${it.metadata?.path}")
                     ref.downloadUrl.addOnSuccessListener {
-                        Log.d("MainActivity", "File location: $it")
+                        Log.d("RegisterActivity", "File location: $it")
                         saveUserToFirebaseDatabase(it.toString())
                     }
                 }
@@ -90,10 +89,14 @@ class MainActivity : AppCompatActivity() {
         val user = User(uid, username_edittext_register.text.toString(),profileImageUrl)
         ref.setValue(user)
                 .addOnSuccessListener {
-                    Log.d("MainActivity", "Finally we saved the user to Firebase Database")
+                    Log.d("RegisterActivity", "Finally we saved the user to Firebase Database")
+
+                    val intent = Intent(this, LatestMessagesActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK.or(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    startActivity(intent)
                 }
                 .addOnFailureListener {
-                    Log.d("MainActivity", "Error save user to database: ${it.toString()}")
+                    Log.d("RegisterActivity", "Error save user to database: ${it.toString()}")
                 }
     }
 
@@ -102,7 +105,7 @@ class MainActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == 0 && resultCode == Activity.RESULT_OK && data != null) {
-            Log.d("MainActivity", "Photo was selected")
+            Log.d("RegisterActivity", "Photo was selected")
             selectedPhotoUri = data.data
             val bitmap = MediaStore.Images.Media.getBitmap(contentResolver, selectedPhotoUri)
             selected_photo_imageview_register.setImageBitmap(bitmap)
@@ -114,4 +117,6 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
-class User(val uid: String, val username: String, val profileImageUrl: String)
+class User(val uid: String, val username: String, val profileImageUrl: String) {
+    constructor() : this("", "", "")
+}
